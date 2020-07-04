@@ -1,7 +1,7 @@
 from functions import *
 from netmiko import ConnectHandler
 import netmiko
-import getpass
+
 
 ne_list = []
 link_list = []
@@ -211,10 +211,16 @@ class Engine:
                             unknown_ne_list.append(UnknownNetworkElement(str(val) + str(ints), ne_list[val].index, ne_list[val].hostname, ne_list[val].ip, int))
 
                 net_connect.disconnect()
-
+print('Enter SSH Credentials: Username')
 user_name = input('> ')
-password = getpass.getpass()
 
+
+print('Enter SSH Credentials: Password')
+password = input('> ')
+# Getpass() doesn't work very well in my IDE and alternatives requires installation from sources I haven't verified.
+# TODO: Find a better password solution.
+
+#
 a = Engine(user_name, password)
 a.main_loop()
 
