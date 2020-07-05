@@ -28,3 +28,5 @@ GUI
 Password is collected with input(), not ideal
 
 ability to specify initial hosts to odd to search using a range (low to high address), instead of csv file. 
+
+Different IOS-versions should be different classes, so that more types of devices can be used with better methods for collecting data for those that support it. 
