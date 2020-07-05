@@ -34,7 +34,6 @@ ne_queue = get_initial_hosts_csv()
 
 class Engine:
 
-
     def __init__(self, user, password):
         self.username = user
         self.password = password
