@@ -2,6 +2,7 @@ from functions import *
 from netmiko import ConnectHandler
 import netmiko
 import tkinter
+from user_interface import tkinter_ui
 
 
 ne_list = []
@@ -33,46 +34,6 @@ ne_queue = get_initial_hosts_csv()
 
 class Engine:
 
-    def tkinter_ui(self):
-        mainWindow = tkinter.Tk()
-        mainWindow.title("Network Discovery Tool")
-        mainWindow.geometry('1024x768')
-
-        label = tkinter.Label(mainWindow, text="Main Window")
-        label.grid(row=0, column=0)
-
-        bottomFrame = tkinter.Frame(mainWindow)
-        bottomFrame.grid(row=2, column=1)
-
-        leftFrame = tkinter.Frame(mainWindow)
-        leftFrame.grid(row=1, column=1)
-
-        rightFrame = tkinter.Frame(mainWindow)
-        rightFrame.grid(row=1, column=2)
-
-        canvas = tkinter.Canvas(leftFrame, relief='raised', borderwidth=1)
-        canvas.grid(row=1, column=0)
-
-        canvas2 = tkinter.Canvas(bottomFrame)
-        canvas2.grid(row=2, column=0)
-
-        button1 = tkinter.Button(canvas, text='Run!')
-        button2 = tkinter.Button(canvas, text='Clear')
-        button3 = tkinter.Button(canvas, text='Save')
-        button1.grid(row=4, column=4, sticky='se')
-        button2.grid(row=4, column=5, sticky='se')
-        button3.grid(row=4, column=6, sticky='se')
-
-        mainWindow.columnconfigure(0, weight=0)
-        mainWindow.columnconfigure(1, weight=0)
-        mainWindow.grid_columnconfigure(2, weight=0)
-
-        leftFrame.config(relief='sunken', borderwidth=2)
-        leftFrame.grid(sticky='se')
-        #  rightFrame.config(relief='sunken', borderwidth=1)
-        bottomFrame.config(relief='sunken', borderwidth=1)
-
-        return mainWindow.mainloop()
 
     def __init__(self, user, password):
         self.username = user
@@ -263,7 +224,7 @@ password = input('> ')
 
 #
 a = Engine(user_name, password)
-a.tkinter_ui()
+tkinter_ui()
 a.main_loop()
 
 
