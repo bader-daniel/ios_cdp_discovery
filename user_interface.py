@@ -8,6 +8,8 @@ class UserInterface:
         self.mainWindow = tkinter.Tk()
         self.mainWindow.title("Network Discovery Tool")
         self.mainWindow.geometry('1024x768')
+        self.mainWindow['padx'] = 9
+        self.mainWindow['pady'] = 9
 
         self.label = tkinter.Label(self.mainWindow, text="Network Discovery Tool - Daniel Bader - NK-Tjänst AB")
         self.label.grid(row=0, column=0, columnspan=6)
@@ -28,7 +30,7 @@ class UserInterface:
         self.mainWindow.rowconfigure(3, weight=0)
         self.mainWindow.rowconfigure(4, weight=0)
         self.mainWindow.rowconfigure(5, weight=0)
-        self.mainWindow.rowconfigure(6, weight=4)
+        self.mainWindow.rowconfigure(6, weight=5)
 
         # username label and entry-field
         self.user_name_label = tkinter.Label(self.mainWindow, text='Username')
