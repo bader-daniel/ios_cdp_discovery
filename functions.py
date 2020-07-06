@@ -158,10 +158,8 @@ class VerifyCommands:
 
     found_commands = []
 
-
     def generate_netmiko_command(self):
         return self.command, self.port_type
-    # TODO: WANT TO BE ABLE TO SKIP SWITCHES
 
     def verify_command(self, network_element, interface, result):
         if self.command_present:
@@ -173,23 +171,14 @@ class VerifyCommands:
                 self.found_commands.append([network_element, interface])
                 print('command missing on: ' + network_element + ': ' + interface)
 
-
-    def getitems(macreturn):
+    # in: make sure it's a list of filterered mac addreses
+    # out: nestled list (inside vlan, mac, type, port, outside lines)
+    def getitems(self, macreturn):
         elements = list(macreturn.split(' '))
 
         elements2 = list(filter(None, elements))
 
         return elements2
-
-# Function that returns the appropriately filtered show mac command, for finding a specific host based on mac
-#     def sh_mac_command_host(self):
-#         mac_command_hosts = getitems()
-#         showmaccommand = '{} | exclude CPU'.format(mac_command)
-#
-#         for i in trunkinterfaces():
-#             showmaccommand = '{0}| {1}'.format(showmaccommand, i)
-#
-#         return showmaccommand
 
     def show_mac_hyphen(self, swmodel):
         sw = swmodel
@@ -206,6 +195,7 @@ class VerifyCommands:
 
         return showmaccommand
 
+    # in show mac output, out: show mac address table without cpu trunks, and with added $ at the end
     def clean_mac_table(self, macinput):
         mac_list = []
         for line in macinput.split('\n'):
@@ -217,27 +207,23 @@ class VerifyCommands:
             except IndexError:
                 continue
         return mac_list
+    # in main.py:
+    # take already generated mac addresses with $ (from function clean_mac_table()
+    # run it through function getitems() to get list with information
+    # then call sh_mac_command_host with parameters of macs to find and the result of the searches
+    def sh_mac_command_host(self, mac_list, mac_search):
+        print('mac_list: ')
+        print(mac_list)
+        print('mac_search: ')
+        print(mac_search)
+
+        # mac_command_hosts = self.getitems(clean_mac_table)
+        # showmaccommand = '{} | exclude CPU'.format(mac_command)
+        #
+        # for i in trunkinterfaces():
+        #     showmaccommand = '{0}| {1}'.format(showmaccommand, i)
+        #
+        # return showmaccommand
 
 
-
-
-        # take a command
-#
-#     # Function that returns the appropriately filtered show mac command
-#     def sh_mac_command(self):
-#         mac_command = self.show_mac_hyphen()
-#         showmaccommand = '{} | exclude CPU'.format(mac_command)
-#
-#         for i in trunkinterfaces():
-#             showmaccommand = '{0}| {1}'.format(showmaccommand, i)
-#
-#         return showmaccommand
-#
-#     # Function that decides which show mac command will be used
-#     def show_mac_hyphen(self):
-#         sw = swmodel()
-#         if sw == 'WS-C2960CX-8PC-L' or sw == 'WS-C2960CX-8PC-L':
-#             return 'show mac address-table'
-#         else:
-#             return 'show mac address-table'
 

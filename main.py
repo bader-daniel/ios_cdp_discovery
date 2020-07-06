@@ -185,8 +185,11 @@ class Engine:
                             command_check = net_connect.send_command('show run interface ' + access + ' | inc ' + command_list[0])
                             result = command_check
                             b.verify_command(ne_list[val].ip, access, result)
+                # Find specific Mac addresses in the network:
                 if b.verification_functions[1]:
-                    pass
+                    print('Which mac addresses would you like to find?')
+                    mac_to_find = [input('> ')]
+                    b.sh_mac_command_host(mac_to_find, b.getitems(ne_list[val].trunks_dollar))
                 # Verify if there are too many mac addresses on the access ports
                 if b.verification_functions[2]:
                     # Get the command that we send to the switch using a number of methods in the VerifyCommands Class
