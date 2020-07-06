@@ -2,7 +2,7 @@ from functions import *
 from netmiko import ConnectHandler
 import netmiko
 import tkinter
-from user_interface import tkinter_ui
+from user_interface import *
 
 
 ne_list = []
@@ -223,7 +223,7 @@ password = input('> ')
 
 #
 a = Engine(user_name, password)
-tkinter_ui()
+gui = UserInterface()
 a.main_loop()
 
 
