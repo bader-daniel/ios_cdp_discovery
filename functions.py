@@ -243,20 +243,5 @@ class VerifyCommands:
         for mac in mac_list:
             for i, line in enumerate(macs_clean):
                 if mac == line[1]:
-                    print(f"Found mac: {macs_clean[i][1]} on interface: {macs_clean[i][3]} vlan: {macs_clean[i][0]}")
-                    # TODO: return the value instead and store it appropriately
-
-        # get searched mac address
-        # if found, remove from list of find addresses
-        # and save interface it was found on
-
-        # mac_command_hosts = self.getitems(clean_mac_table)
-        # showmaccommand = '{} | exclude CPU'.format(mac_command)
-        #
-        # for i in trunkinterfaces():
-        #     showmaccommand = '{0}| {1}'.format(showmaccommand, i)
-        #
-        # return showmaccommand
-
-
+                    return macs_clean[i][1], macs_clean[i][3], macs_clean[i][0]
 

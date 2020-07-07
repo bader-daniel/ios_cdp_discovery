@@ -9,6 +9,7 @@ bad_link_list = []
 link_id_list = []
 unknown_ne_list = []
 mac_search = ['9c7b.ef9e.15a3']
+mac_search_results = []
 skip_list = []
 not_work = []
 
@@ -190,10 +191,17 @@ class Engine:
 
                 # Find specific Mac addresses in the network:
                 if b.verification_functions[1] and mac_search:
+                    temp_mac_find_list = []
                     get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[val].model),
                                                                          ne_list[val].trunks_dollar))
                     mac_list = b.clean_mac_table(get_macs)
-                    b.sh_mac_command_host(mac_search, mac_list)
+
+                    # Add found mac addresses and relating information to list called mac_search_results:
+                    temp_mac_find_list.extend(b.sh_mac_command_host(mac_search, mac_list))
+                    temp_mac_find_list.append(ne_list[val].ip)
+                    temp_mac_find_list.append(ne_list[val].hostname)
+                    mac_search_results.append(temp_mac_find_list)
+                    print(temp_mac_find_list)
                 elif b.verification_functions[1] and not mac_search:
                     print("You haven't specified any MAC-Addresses")
 
