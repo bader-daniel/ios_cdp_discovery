@@ -174,11 +174,15 @@ class VerifyCommands:
     # in: make sure it's a list of filterered mac addreses
     # out: nestled list (inside vlan, mac, type, port, outside lines)
     def getitems(self, macreturn):
-        elements = list(macreturn.split(' '))
+        mac_lines = []
+        for mac in macreturn:
+            elements = list(mac.split(' '))
 
-        elements2 = list(filter(None, elements))
+            elements2 = list(filter(None, elements))
 
-        return elements2
+            mac_lines.append(elements2)
+
+        return mac_lines
 
     def show_mac_hyphen(self, swmodel):
         sw = swmodel
@@ -207,15 +211,44 @@ class VerifyCommands:
             except IndexError:
                 continue
         return mac_list
-    # in main.py:
-    # take already generated mac addresses with $ (from function clean_mac_table()
-    # run it through function getitems() to get list with information
-    # then call sh_mac_command_host with parameters of macs to find and the result of the searches
-    def sh_mac_command_host(self, mac_list, mac_search):
-        print('mac_list: ')
-        print(mac_list)
-        print('mac_search: ')
-        print(mac_search)
+
+    # take a mac address in any format and return on in Cisco format: xxxx.xxxx.xxxx
+    def convert_to_cisco_mac(self, macs):
+        delimiters = []
+        assembled_macs = []
+        stripped_macs = []
+        # get a list of delimiters in the mac
+        for mac_address in macs:
+            for char in mac_address:
+                if char in '0123456789abcdef':
+                    continue
+                else:
+                    delimiters.append(char)
+
+        for mac in macs:
+            fixed_mac = ''
+            for char in delimiters:
+                if char in mac:
+                    fixed_mac = ''.join(mac.split(char))
+            stripped_macs.append(fixed_mac)
+
+        for mac in stripped_macs:
+            assembled_macs.append(mac[0:4] + '.' + mac[4:8] + '.' + mac[8:])
+
+        return assembled_macs
+
+    #  mac_list is the mac addresses you want to find, show_mac_output is show mac address output from the local
+    #  switch without the trunk or CPE CAM-entries
+    def sh_mac_command_host(self, mac_list, macs_clean):
+        for mac in mac_list:
+            for i, line in enumerate(macs_clean):
+                if mac == line[1]:
+                    print(f"Found mac: {macs_clean[i][1]} on interface: {macs_clean[i][3]} vlan: {macs_clean[i][0]}")
+                    # TODO: return the value instead and store it appropriately
+
+        # get searched mac address
+        # if found, remove from list of find addresses
+        # and save interface it was found on
 
         # mac_command_hosts = self.getitems(clean_mac_table)
         # showmaccommand = '{} | exclude CPU'.format(mac_command)

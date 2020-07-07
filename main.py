@@ -8,7 +8,7 @@ link_list = []
 bad_link_list = []
 link_id_list = []
 unknown_ne_list = []
-
+mac_search = ['9c7b.ef9e.15a3']
 skip_list = []
 not_work = []
 
@@ -177,26 +177,35 @@ class Engine:
                     command_list = list(b.generate_netmiko_command())
                     if command_list[1] == 'trunk':
                         for trunk in ne_list[val].trunks_clean:
-                            command_check = net_connect.send_command('show run interface ' + trunk + ' | inc ' + command_list[0])
+                            command_check = net_connect.send_command('show run interface ' + trunk +
+                                                                     ' | inc ' + command_list[0])
                             result = command_check
                             b.verify_command(ne_list[val].ip, trunk, result)
                     elif command_list[1] == 'access':
                         for access in ne_list[val].access_ports:
-                            command_check = net_connect.send_command('show run interface ' + access + ' | inc ' + command_list[0])
+                            command_check = net_connect.send_command('show run interface ' + access +
+                                                                     ' | inc ' + command_list[0])
                             result = command_check
                             b.verify_command(ne_list[val].ip, access, result)
+
                 # Find specific Mac addresses in the network:
-                if b.verification_functions[1]:
-                    print('Which mac addresses would you like to find?')
-                    mac_to_find = [input('> ')]
-                    b.sh_mac_command_host(mac_to_find, b.getitems(ne_list[val].trunks_dollar))
+                if b.verification_functions[1] and mac_search:
+                    get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[val].model),
+                                                                         ne_list[val].trunks_dollar))
+                    mac_list = b.clean_mac_table(get_macs)
+                    b.sh_mac_command_host(mac_search, mac_list)
+                elif b.verification_functions[1] and not mac_search:
+                    print("You haven't specified any MAC-Addresses")
+
                 # Verify if there are too many mac addresses on the access ports
                 if b.verification_functions[2]:
                     # Get the command that we send to the switch using a number of methods in the VerifyCommands Class
                     # Also send command to get the show mac output
-                    get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[val].model), ne_list[val].trunks_dollar))
-                    #  clean it by removing unwanted lines and return the data is nestled lists:
-                    mac_list = b.clean_mac_table(get_macs)
+                    if not b.verification_functions[1]:
+                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[val].model),
+                                                                             ne_list[val].trunks_dollar))
+                        #  clean it by removing unwanted lines and return the data is nestled lists:
+                        mac_list = b.clean_mac_table(get_macs)
                     mac_threshold = 3
 
                     # find all interfaces
