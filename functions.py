@@ -240,8 +240,11 @@ class VerifyCommands:
     #  mac_list is the mac addresses you want to find, show_mac_output is show mac address output from the local
     #  switch without the trunk or CPE CAM-entries
     def sh_mac_command_host(self, mac_list, macs_clean):
+        build_output = []
         for mac in mac_list:
             for i, line in enumerate(macs_clean):
                 if mac == line[1]:
-                    return macs_clean[i][1], macs_clean[i][3], macs_clean[i][0]
+                    looped_list = [macs_clean[i][1], macs_clean[i][3], macs_clean[i][0]]
+                    build_output.append(looped_list)
+        return build_output
 

@@ -8,7 +8,8 @@ link_list = []
 bad_link_list = []
 link_id_list = []
 unknown_ne_list = []
-mac_search = ['9c7b.ef9e.15a3']
+# mac search does not need to be specified with Cisco formatting, any delimiter, anywhere, is fine. Just don't add more than one delimiter per mac address.
+mac_search = ['00:06:8e:30:68:38','00:06:8e:30:da:e4','00:06:8e:30:da:e5','00:06:8e:30:da:ac','00:06:8e:30:da:ab','00:06:8e:30:da:e8','00:06:8e:30:da:64','00:06:8e:30:da:ca','00:06:8e:30:da:9a','00:06:8e:30:ca:8f','00:06:8e:30:da:69','00:06:8e:31:09:5d','00:06:8e:30:b4:42','00:06:8e:30:da:ad','00:06:8e:30:da:af','00:06:8e:30:da:b5','00:06:8e:31:57:ef','00:06:8e:30:68:6b','00:06:8e:30:da:b0','00:06:8e:30:b2:82','00:06:8e:30:11:c6','00:06:8e:30:32:f6','00:06:8e:30:11:c2']
 mac_search_results = []
 skip_list = []
 not_work = []
@@ -174,6 +175,11 @@ class Engine:
             link_id_list.append(swlocal_link_id_list)
 
             if b:
+                # TODO: a lot of verification commands use the same functions. Run a loop before executing the verifications
+                # themselves that generates all the necessary show commands and their output
+                #  or example: finding certain mac addresses on interfaces and checking for too many macs on access-
+                #  ports require the same information.
+
                 if b.verification_functions[0]:
                     command_list = list(b.generate_netmiko_command())
                     if command_list[1] == 'trunk':
@@ -196,12 +202,20 @@ class Engine:
                                                                          ne_list[val].trunks_dollar))
                     mac_list = b.clean_mac_table(get_macs)
 
+                    # take mac addresses we want to find and compare them to the access-port CAM table
+                    found_macs = b.sh_mac_command_host(b.convert_to_cisco_mac(mac_search), mac_list)
+
                     # Add found mac addresses and relating information to list called mac_search_results:
-                    temp_mac_find_list.extend(b.sh_mac_command_host(mac_search, mac_list))
-                    temp_mac_find_list.append(ne_list[val].ip)
-                    temp_mac_find_list.append(ne_list[val].hostname)
-                    mac_search_results.append(temp_mac_find_list)
-                    print(temp_mac_find_list)
+
+                    for macs in found_macs:
+                        # temp_mac_find_list.clear()
+                        # temp_mac_find_list.extend(macs)
+                        # temp_mac_find_list.append(ne_list[val].ip)
+                        # temp_mac_find_list.append(ne_list[val].hostname)
+
+                        temp_mac_find_list = [macs[0], macs[1], macs[2], ne_list[val].ip, ne_list[val].hostname]
+                        mac_search_results.append(temp_mac_find_list)
+                        print(temp_mac_find_list)
                 elif b.verification_functions[1] and not mac_search:
                     print("You haven't specified any MAC-Addresses")
 
@@ -215,6 +229,7 @@ class Engine:
                         #  clean it by removing unwanted lines and return the data is nestled lists:
                         mac_list = b.clean_mac_table(get_macs)
                     mac_threshold = 3
+
 
                     # find all interfaces
                     if_count = []
@@ -270,6 +285,15 @@ try:
         print("\n")
 except:
     print("No switches found")
+
+print("MAC Addresses found: ")
+try:
+    for mac in mac_search_results:
+        print(f'Mac: {mac}')
+except:
+    print('no macs found or search not done')
+
+
 # command was found/missing on:
 # the following trunk interfaces cannot find neighbor interfaces with CDP
 #
