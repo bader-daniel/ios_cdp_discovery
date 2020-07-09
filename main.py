@@ -198,14 +198,17 @@ class Engine:
                 # Find specific Mac addresses in the network:
                 if b.verification_functions[1] and mac_search:
                     temp_mac_find_list = []
-                    get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[val].model),
-                                                                         ne_list[val].trunks_dollar))
-                    mac_list = b.clean_mac_table(get_macs)
+                    try:
+                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[val].model),
+                                                                             ne_list[val].trunks_dollar))
+                        mac_list = b.clean_mac_table(get_macs)
 
-                    # take mac addresses we want to find and compare them to the access-port CAM table
-                    found_macs = b.sh_mac_command_host(b.convert_to_cisco_mac(mac_search), mac_list)
+                        # take mac addresses we want to find and compare them to the access-port CAM table
+                        found_macs = b.sh_mac_command_host(b.convert_to_cisco_mac(mac_search), mac_list)
 
-                    # Add found mac addresses and relating information to list called mac_search_results:
+                        # Add found mac addresses and relating information to list called mac_search_results:
+                    except:  #  .NetmikoTimeoutException:
+                        print('Timed out')
 
                     for macs in found_macs:
                         # temp_mac_find_list.clear()
