@@ -153,7 +153,7 @@ class Engine:
             ne_list[main_index].access_ports = ne_list[main_index].get_access_ports(temp_access_ports, ne_list[main_index].trunks_clean)
 
             for trunks_clean_i, trunks_clean_item in enumerate(ne_list[main_index].trunks_clean):
-                link_list.append(TrunkLink(str(main_index) + '-' + str(trunks_clean_i), ne_list[main_index].index, ne_list[main_index].hostname,
+                link_list.append(TrunkLink(str(main_index) + '-' + str(trunks_clean_i), ne_list[main_index].swindex, ne_list[main_index].hostname,
                                            ne_list[main_index].ip, trunks_clean_item))
                 swlocal_link_id_list.append(str(main_index) + '-' + str(trunks_clean_i))
 
@@ -165,7 +165,7 @@ class Engine:
                         ne_queue.append(link_list[swlocal_index].remote_swip)
                 except ValueError:
                     print('No CDP information!')
-                    bad_link_list.append(TrunkLink(main_index, ne_list[main_index].index, ne_list[main_index].hostname, ne_list[main_index].ip, str(ne_list[main_index].trunks_clean[swlocal_index])))
+                    bad_link_list.append(TrunkLink(main_index, ne_list[main_index].swindex, ne_list[main_index].hostname, ne_list[main_index].ip, str(ne_list[main_index].trunks_clean[swlocal_index])))
                     print(bad_link_list[len(bad_link_list) - 1].local_swip) # TODO: DON'T USE LENGTH AS AN INDEX
                     print(bad_link_list[len(bad_link_list) - 1].local_swif)
                 except:
@@ -246,7 +246,7 @@ class Engine:
                         if if_count.count(int) > mac_threshold:
                             print(f"Too many macs ({if_count.count(int)}) found on {int}")
                             skip_if.append(int)
-                            unknown_ne_list.append(UnknownNetworkElement(str(main_index) + str(ints), ne_list[main_index].index, ne_list[main_index].hostname, ne_list[main_index].ip, int))
+                            unknown_ne_list.append(UnknownNetworkElement(str(main_index) + str(ints), ne_list[main_index].swindex, ne_list[main_index].hostname, ne_list[main_index].ip, int))
 
                 net_connect.disconnect()
 print('Enter SSH Credentials: Username')
@@ -268,23 +268,24 @@ if not_work:
     print("")
     print("*" * 10)
     print("\n")
-for val, item in enumerate(unknown_ne_list):
+for unknown_ne_list_index, item in enumerate(unknown_ne_list):
     print("Access-ports with too many mac-addresses:")
-    print("Index of element:", unknown_ne_list[val].index)
-    print("Index of local switch:", unknown_ne_list[val].local_swindex)
-    print("Hostname of local switch:", unknown_ne_list[val].local_swhostname)
-    print("IP of local switch:", unknown_ne_list[val].local_swip)
-    print("Local interface:", unknown_ne_list[val].local_swif)
+    print("Index of element:", unknown_ne_list[unknown_ne_list_index].index)
+    print("Index of local switch:", unknown_ne_list[unknown_ne_list_index].local_swindex)
+    print("Hostname of local switch:", unknown_ne_list[unknown_ne_list_index].local_swhostname)
+    print("IP of local switch:", unknown_ne_list[unknown_ne_list_index].local_swip)
+    print("Local interface:", unknown_ne_list[unknown_ne_list_index].local_swif)
     print("*" * 10)
     print("\n")
-for i, value in enumerate(ne_queue):
-    print("Switches found:")
-    print("Index of element:", ne_list[i].index)
-    print("Hostname of switch:", ne_list[i].hostname)
-    print("IP of switch:", ne_list[i].ip)
-    print("Model:", ne_list[i].model)
-    print("*" * 10)
-    print("\n")
+for i, value in enumerate(ne_list):
+    if value != '': # because ne_list loop is index based I have to add '' when an iteration doesn't find anything to add to ne_list, but I need to move the index along
+        print("Switches found:")
+        print("Index of element:", ne_list[i].swindex)
+        print("Hostname of switch:", ne_list[i].hostname)
+        print("IP of switch:", ne_list[i].ip)
+        print("Model:", ne_list[i].model)
+        print("*" * 10)
+        print("\n")
 
 
 print("MAC Addresses found: ")

@@ -32,7 +32,7 @@ class NetworkElement:
     ###############################################################
 
     def __init__(self, index, ip, temphost, tempinv):
-        self.index = index
+        self.swindex = index
         self.hostname = self.swhostname(temphost)
         self.ip = ip
         self.model = self.swmodel(tempinv)
