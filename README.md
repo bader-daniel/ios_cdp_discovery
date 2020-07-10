@@ -14,14 +14,17 @@ those strings.
 
 Only works on active ports!
 
+Mac search works with both Cisco and Microsoft type mac addresses, or any delimeter at all. But donät use more than one delimiter per mac address. That won't work. 
 
 
-TODO:
+
+TODO/Not working yet:
 
 Implement more support for different IOS version, it also finds version and has the ability to change the show mac-address command accordingly. But it itsn't
 properly implemented. 
 
-Functionality to locate specific mac addresses in the topology isn't working yet. When prompted, you have to select no. 
+if you choose to use additional checks while scanning the network, you have to say yes when asked if you want to search for specific commands. 
+
 
 GUI
 
