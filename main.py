@@ -114,7 +114,7 @@ class Engine:
         elif additional_checks == 'no':
             b = ''
 
-        for val, ip in enumerate(ne_queue):
+        for main_index, ip in enumerate(ne_queue):
 
             if ip in skip_list:
                 ne_list.append('')
@@ -143,34 +143,34 @@ class Engine:
             swlocal_link_id_list = []
             temphost = net_connect.send_command('show run | inc hostname')
             tempinv = net_connect.send_command('show inventory')
-            ne_list.append(NetworkElement(val, ip, temphost, tempinv))
+            ne_list.append(NetworkElement(main_index, ip, temphost, tempinv))
 
             # More commands needed by functions, after instantiation of NE
             temptrunks = net_connect.send_command('show interface trunk | begin pruned')
             temp_access_ports = net_connect.send_command('sh int status | inc connected')
-            ne_list[val].trunks_clean = ne_list[val].trunkinterfacesclean(temptrunks)
-            ne_list[val].trunks_dollar = ne_list[val].trunkinterfaces(temptrunks)
-            ne_list[val].access_ports = ne_list[val].get_access_ports(temp_access_ports, ne_list[val].trunks_clean)
+            ne_list[main_index].trunks_clean = ne_list[main_index].trunkinterfacesclean(temptrunks)
+            ne_list[main_index].trunks_dollar = ne_list[main_index].trunkinterfaces(temptrunks)
+            ne_list[main_index].access_ports = ne_list[main_index].get_access_ports(temp_access_ports, ne_list[main_index].trunks_clean)
 
-            for val2, item in enumerate(ne_list[val].trunks_clean):
-                link_list.append(TrunkLink(str(val) + '-' + str(val2), ne_list[val].index, ne_list[val].hostname,
-                                           ne_list[val].ip, item))
-                swlocal_link_id_list.append(str(val) + '-' + str(val2))
+            for trunks_clean_i, trunks_clean_item in enumerate(ne_list[main_index].trunks_clean):
+                link_list.append(TrunkLink(str(main_index) + '-' + str(trunks_clean_i), ne_list[main_index].index, ne_list[main_index].hostname,
+                                           ne_list[main_index].ip, trunks_clean_item))
+                swlocal_link_id_list.append(str(main_index) + '-' + str(trunks_clean_i))
 
-            for index, i in enumerate(swlocal_link_id_list):
-                cdp_check = net_connect.send_command("sh cdp nei " + str(ne_list[val].trunks_clean[index]) + " detail")
+            for swlocal_index, swlocal_value in enumerate(swlocal_link_id_list):
+                cdp_check = net_connect.send_command("sh cdp nei " + str(ne_list[main_index].trunks_clean[swlocal_index]) + " detail")
                 try:
-                    link_list[index].remote_swhostname, link_list[index].remote_swip = link_list[index].cdp_neighbors(cdp_check)
-                    if link_list[index].remote_swip not in skip_list:
-                        ne_queue.append(link_list[index].remote_swip)
+                    link_list[swlocal_index].remote_swhostname, link_list[swlocal_index].remote_swip = link_list[swlocal_index].cdp_neighbors(cdp_check)
+                    if link_list[swlocal_index].remote_swip not in skip_list:
+                        ne_queue.append(link_list[swlocal_index].remote_swip)
                 except ValueError:
                     print('No CDP information!')
-                    bad_link_list.append(TrunkLink(val, ne_list[val].index, ne_list[val].hostname, ne_list[val].ip, str(ne_list[val].trunks_clean[index])))
+                    bad_link_list.append(TrunkLink(main_index, ne_list[main_index].index, ne_list[main_index].hostname, ne_list[main_index].ip, str(ne_list[main_index].trunks_clean[swlocal_index])))
                     print(bad_link_list[len(bad_link_list) - 1].local_swip) # TODO: DON'T USE LENGTH AS AN INDEX
                     print(bad_link_list[len(bad_link_list) - 1].local_swif)
                 except:
                     print('CDP FUNCTION NOT WORKING')
-                    print(link_list[index].cdp_neighbors(cdp_check))
+                    print(link_list[swlocal_index].cdp_neighbors(cdp_check))
                     bad_link_list.append('')
             link_id_list.append(swlocal_link_id_list)
 
@@ -183,24 +183,24 @@ class Engine:
                 if b.verification_functions[0]:
                     command_list = list(b.generate_netmiko_command())
                     if command_list[1] == 'trunk':
-                        for trunk in ne_list[val].trunks_clean:
+                        for trunk in ne_list[main_index].trunks_clean:
                             command_check = net_connect.send_command('show run interface ' + trunk +
                                                                      ' | inc ' + command_list[0])
                             result = command_check
-                            b.verify_command(ne_list[val].ip, trunk, result)
+                            b.verify_command(ne_list[main_index].ip, trunk, result)
                     elif command_list[1] == 'access':
-                        for access in ne_list[val].access_ports:
+                        for access in ne_list[main_index].access_ports:
                             command_check = net_connect.send_command('show run interface ' + access +
                                                                      ' | inc ' + command_list[0])
                             result = command_check
-                            b.verify_command(ne_list[val].ip, access, result)
+                            b.verify_command(ne_list[main_index].ip, access, result)
 
                 # Find specific Mac addresses in the network:
                 if b.verification_functions[1] and mac_search:
                     temp_mac_find_list = []
                     try:
-                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[val].model),
-                                                                             ne_list[val].trunks_dollar))
+                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[main_index].model),
+                                                                             ne_list[main_index].trunks_dollar))
                         mac_list = b.clean_mac_table(get_macs)
 
                         # take mac addresses we want to find and compare them to the access-port CAM table
@@ -213,10 +213,10 @@ class Engine:
                     for macs in found_macs:
                         # temp_mac_find_list.clear()
                         # temp_mac_find_list.extend(macs)
-                        # temp_mac_find_list.append(ne_list[val].ip)
-                        # temp_mac_find_list.append(ne_list[val].hostname)
+                        # temp_mac_find_list.append(ne_list[main_index].ip)
+                        # temp_mac_find_list.append(ne_list[main_index].hostname)
 
-                        temp_mac_find_list = [macs[0], macs[1], macs[2], ne_list[val].ip, ne_list[val].hostname]
+                        temp_mac_find_list = [macs[0], macs[1], macs[2], ne_list[main_index].ip, ne_list[main_index].hostname]
                         mac_search_results.append(temp_mac_find_list)
                         print(temp_mac_find_list)
                 elif b.verification_functions[1] and not mac_search:
@@ -227,8 +227,8 @@ class Engine:
                     # Get the command that we send to the switch using a number of methods in the VerifyCommands Class
                     # Also send command to get the show mac output
                     if not b.verification_functions[1]:
-                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[val].model),
-                                                                             ne_list[val].trunks_dollar))
+                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[main_index].model),
+                                                                             ne_list[main_index].trunks_dollar))
                         #  clean it by removing unwanted lines and return the data is nestled lists:
                         mac_list = b.clean_mac_table(get_macs)
                     mac_threshold = 3
@@ -246,7 +246,7 @@ class Engine:
                         if if_count.count(int) > mac_threshold:
                             print(f"Too many macs ({if_count.count(int)}) found on {int}")
                             skip_if.append(int)
-                            unknown_ne_list.append(UnknownNetworkElement(str(val) + str(ints), ne_list[val].index, ne_list[val].hostname, ne_list[val].ip, int))
+                            unknown_ne_list.append(UnknownNetworkElement(str(main_index) + str(ints), ne_list[main_index].index, ne_list[main_index].hostname, ne_list[main_index].ip, int))
 
                 net_connect.disconnect()
 print('Enter SSH Credentials: Username')
@@ -277,17 +277,15 @@ for val, item in enumerate(unknown_ne_list):
     print("Local interface:", unknown_ne_list[val].local_swif)
     print("*" * 10)
     print("\n")
-try:
-    for val, item in enumerate(ne_list):
-        print("Switches found:")
-        print("Index of element:", ne_list[val].index)
-        print("Hostname of switch:", ne_list[val].hostname)
-        print("IP of switch:", ne_list[val].ip)
-        print("Model:", ne_list[val].model)
-        print("*" * 10)
-        print("\n")
-except:
-    print("No switches found")
+for i, value in enumerate(ne_queue):
+    print("Switches found:")
+    print("Index of element:", ne_list[i].index)
+    print("Hostname of switch:", ne_list[i].hostname)
+    print("IP of switch:", ne_list[i].ip)
+    print("Model:", ne_list[i].model)
+    print("*" * 10)
+    print("\n")
+
 
 print("MAC Addresses found: ")
 try:
