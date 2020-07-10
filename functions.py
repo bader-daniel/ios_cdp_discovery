@@ -45,9 +45,9 @@ class NetworkElement:
     # Function that returns a list of trunks, with just the abbreviated trunk interface names and a dollar sign
     def trunkinterfaces(self, temptrunks):
         trunks = []
-        for row in temptrunks.split('\n'):
+        for index, row in enumerate(temptrunks.split('\n')):
             temp = ''
-            if '0/' not in row:
+            if index == 0:
                 continue
             for i in row:
                 if i == ' ':
@@ -62,9 +62,9 @@ class NetworkElement:
     # Function that returns a list of trunks, with just the abbreviated trunk interface names no dollar sign
     def trunkinterfacesclean(self, temptrunks):
         trunks = []
-        for row in temptrunks.split('\n'):
+        for index, row in enumerate(temptrunks.split('\n')):
             temp = ''
-            if '0/' not in row:
+            if index == 0:
                 continue
             for i in row:
                 if i == ' ':

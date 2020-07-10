@@ -278,7 +278,7 @@ for unknown_ne_list_index, item in enumerate(unknown_ne_list):
     print("*" * 10)
     print("\n")
 for i, value in enumerate(ne_list):
-    if value != '': # because ne_list loop is index based I have to add '' when an iteration doesn't find anything to add to ne_list, but I need to move the index along
+    if value != '': # because ne_list loop is index based I have to add '' when an iteration doesn't find anything to add to ne_list, but I need to keep the index synced with the len() of the list
         print("Switches found:")
         print("Index of element:", ne_list[i].swindex)
         print("Hostname of switch:", ne_list[i].hostname)
