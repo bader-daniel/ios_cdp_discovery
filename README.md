@@ -6,7 +6,8 @@ with the discovered neighbors.
 
 Current state:
 
-GUI not implemented, sparse information is give during and after discovery but the plan is to do present a map
+GUI not implemented, sparse information is give during and after discovery but the plan is to present a map
+
 
 Will also find trunks with no CDP information.
 Optionally, it will find access-ports with too many mac addresses, and look for text-strings on trunks or access ports(in running-config), or the absens of
@@ -14,7 +15,7 @@ those strings.
 
 Only works on active ports!
 
-Mac search works with both Cisco and Microsoft type mac addresses, or any delimeter at all. But donät use more than one delimiter per mac address. That won't work. 
+Mac search works with both Cisco and Microsoft type mac addresses, or any delimeter at all. But don't use more than one type delimiter per mac address. That won't work. 
 
 
 
@@ -30,6 +31,6 @@ GUI
 
 Password is collected with input(), not ideal
 
-ability to specify initial hosts to odd to search using a range (low to high address), instead of csv file. 
+ability to specify initial hosts to add to search using a range (low to high address), instead of csv file. 
 
 Different IOS-versions should be different classes, so that more types of devices can be used with better methods for collecting data for those that support it. 
