@@ -1,35 +1,23 @@
 from functions import *
 from netmiko import ConnectHandler
 import netmiko
+import setup
 
 
-ne_list = []
+all_network_elements_list = []
 link_list = []
 bad_link_list = []
 link_id_list = []
-unknown_ne_list = []
-# mac search does not need to be specified with Cisco formatting, any delimiter, anywhere, is fine. Just don't add more than one delimiter per mac address.
-mac_search = ['00:06:8e:30:68:38','00:06:8e:30:da:e4','00:06:8e:30:da:e5','00:06:8e:30:da:ac','00:06:8e:30:da:ab','00:06:8e:30:da:e8','00:06:8e:30:da:64','00:06:8e:30:da:ca','00:06:8e:30:da:9a','00:06:8e:30:ca:8f','00:06:8e:30:da:69','00:06:8e:31:09:5d','00:06:8e:30:b4:42','00:06:8e:30:da:ad','00:06:8e:30:da:af','00:06:8e:30:da:b5','00:06:8e:31:57:ef','00:06:8e:30:68:6b','00:06:8e:30:da:b0','00:06:8e:30:b2:82','00:06:8e:30:11:c6','00:06:8e:30:32:f6','00:06:8e:30:11:c2']
+found_unknown_network_entity_list = []
+# mac search does not need to be specified with Cisco formatting, any delimiter, anywhere, is fine.
+# Just don't add more than one type of delimiter per mac address.
+# used to find specific devices
+mac_address_to_search_for = []
 mac_search_results = []
-skip_list = []
+do_not_scan_network_elements_list = []
 not_work = []
 
-
-def get_initial_hosts_csv():
-    csv = open('hosts.csv', 'r')
-
-    delimiter = ','
-    orig_hosts = list(csv.read().split(delimiter))
-
-    hosts = []
-    for i in orig_hosts:
-        hosts.append(i.strip())
-
-    csv.close()
-    return hosts
-
-
-ne_queue = get_initial_hosts_csv()
+network_elements_to_scan = setup.init_queue()
 
 
 class Engine:
@@ -38,9 +26,7 @@ class Engine:
         self.username = user
         self.password = password
 
-
     def main_loop(self):
-
         # additional checks
         # find macs on access-ports
         # find command in interfaces
@@ -114,10 +100,10 @@ class Engine:
         elif additional_checks == 'no':
             b = ''
 
-        for main_index, ip in enumerate(ne_queue):
+        for main_index, ip in enumerate(network_elements_to_scan):
 
-            if ip in skip_list:
-                ne_list.append('')
+            if ip in do_not_scan_network_elements_list:
+                all_network_elements_list.append('')
                 continue
             iosv_l2 = {
                 'device_type': 'cisco_ios',
@@ -126,16 +112,16 @@ class Engine:
                 'password': self.password,
             }
             print(f"Currently working on {ip}\n")
-            skip_list.append(ip)
+            do_not_scan_network_elements_list.append(ip)
             try:
                 net_connect = ConnectHandler(**iosv_l2) # TODO: more specific error handling if the connection doesn't work
             except netmiko.ssh_exception.NetmikoTimeoutException:
-                ne_list.append('')
+                all_network_elements_list.append('')
                 not_work.append(ip)
                 continue
             except netmiko.ssh_exception.NetmikoAuthenticationException:
-                ne_list.append('')
-                skip_list.append(ip)
+                all_network_elements_list.append('')
+                do_not_scan_network_elements_list.append(ip)
                 not_work.append(ip)
                 continue
             # Below are the commands that get the IOS output that will be used by the various methods, if
@@ -143,29 +129,29 @@ class Engine:
             swlocal_link_id_list = []
             temphost = net_connect.send_command('show run | inc hostname')
             tempinv = net_connect.send_command('show inventory')
-            ne_list.append(NetworkElement(main_index, ip, temphost, tempinv))
+            all_network_elements_list.append(NetworkElement(main_index, ip, temphost, tempinv))
 
             # More commands needed by functions, after instantiation of NE
             temptrunks = net_connect.send_command('show interface trunk | begin pruned')
             temp_access_ports = net_connect.send_command('sh int status | inc connected')
-            ne_list[main_index].trunks_clean = ne_list[main_index].trunkinterfacesclean(temptrunks)
-            ne_list[main_index].trunks_dollar = ne_list[main_index].trunkinterfaces(temptrunks)
-            ne_list[main_index].access_ports = ne_list[main_index].get_access_ports(temp_access_ports, ne_list[main_index].trunks_clean)
+            all_network_elements_list[main_index].trunks_clean = all_network_elements_list[main_index].trunkinterfacesclean(temptrunks)
+            all_network_elements_list[main_index].trunks_dollar = all_network_elements_list[main_index].trunkinterfaces(temptrunks)
+            all_network_elements_list[main_index].access_ports = all_network_elements_list[main_index].get_access_ports(temp_access_ports, all_network_elements_list[main_index].trunks_clean)
 
-            for trunks_clean_i, trunks_clean_item in enumerate(ne_list[main_index].trunks_clean):
-                link_list.append(TrunkLink(str(main_index) + '-' + str(trunks_clean_i), ne_list[main_index].swindex, ne_list[main_index].hostname,
-                                           ne_list[main_index].ip, trunks_clean_item))
+            for trunks_clean_i, trunks_clean_item in enumerate(all_network_elements_list[main_index].trunks_clean):
+                link_list.append(TrunkLink(str(main_index) + '-' + str(trunks_clean_i), all_network_elements_list[main_index].swindex, all_network_elements_list[main_index].hostname,
+                                           all_network_elements_list[main_index].ip, trunks_clean_item))
                 swlocal_link_id_list.append(str(main_index) + '-' + str(trunks_clean_i))
 
             for swlocal_index, swlocal_value in enumerate(swlocal_link_id_list):
-                cdp_check = net_connect.send_command("sh cdp nei " + str(ne_list[main_index].trunks_clean[swlocal_index]) + " detail")
+                cdp_check = net_connect.send_command("sh cdp nei " + str(all_network_elements_list[main_index].trunks_clean[swlocal_index]) + " detail")
                 try:
                     link_list[swlocal_index].remote_swhostname, link_list[swlocal_index].remote_swip = link_list[swlocal_index].cdp_neighbors(cdp_check)
-                    if link_list[swlocal_index].remote_swip not in skip_list:
-                        ne_queue.append(link_list[swlocal_index].remote_swip)
+                    if link_list[swlocal_index].remote_swip not in do_not_scan_network_elements_list:
+                        network_elements_to_scan.append(link_list[swlocal_index].remote_swip)
                 except ValueError:
                     print('No CDP information!')
-                    bad_link_list.append(TrunkLink(main_index, ne_list[main_index].swindex, ne_list[main_index].hostname, ne_list[main_index].ip, str(ne_list[main_index].trunks_clean[swlocal_index])))
+                    bad_link_list.append(TrunkLink(main_index, all_network_elements_list[main_index].swindex, all_network_elements_list[main_index].hostname, all_network_elements_list[main_index].ip, str(all_network_elements_list[main_index].trunks_clean[swlocal_index])))
                     print(bad_link_list[len(bad_link_list) - 1].local_swip) # TODO: DON'T USE LENGTH AS AN INDEX
                     print(bad_link_list[len(bad_link_list) - 1].local_swif)
                 except:
@@ -183,28 +169,28 @@ class Engine:
                 if b.verification_functions[0]:
                     command_list = list(b.generate_netmiko_command())
                     if command_list[1] == 'trunk':
-                        for trunk in ne_list[main_index].trunks_clean:
+                        for trunk in all_network_elements_list[main_index].trunks_clean:
                             command_check = net_connect.send_command('show run interface ' + trunk +
                                                                      ' | inc ' + command_list[0])
                             result = command_check
-                            b.verify_command(ne_list[main_index].ip, trunk, result)
+                            b.verify_command(all_network_elements_list[main_index].ip, trunk, result)
                     elif command_list[1] == 'access':
-                        for access in ne_list[main_index].access_ports:
+                        for access in all_network_elements_list[main_index].access_ports:
                             command_check = net_connect.send_command('show run interface ' + access +
                                                                      ' | inc ' + command_list[0])
                             result = command_check
-                            b.verify_command(ne_list[main_index].ip, access, result)
+                            b.verify_command(all_network_elements_list[main_index].ip, access, result)
 
                 # Find specific Mac addresses in the network:
-                if b.verification_functions[1] and mac_search:
+                if b.verification_functions[1] and mac_address_to_search_for:
                     temp_mac_find_list = []
                     try:
-                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[main_index].model),
-                                                                             ne_list[main_index].trunks_dollar))
+                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(all_network_elements_list[main_index].model),
+                                                                             all_network_elements_list[main_index].trunks_dollar))
                         mac_list = b.clean_mac_table(get_macs)
 
                         # take mac addresses we want to find and compare them to the access-port CAM table
-                        found_macs = b.sh_mac_command_host(b.convert_to_cisco_mac(mac_search), mac_list)
+                        found_macs = b.sh_mac_command_host(b.convert_to_cisco_mac(mac_address_to_search_for), mac_list)
 
                         # Add found mac addresses and relating information to list called mac_search_results:
                     except:  #  .NetmikoTimeoutException:
@@ -216,10 +202,10 @@ class Engine:
                         # temp_mac_find_list.append(ne_list[main_index].ip)
                         # temp_mac_find_list.append(ne_list[main_index].hostname)
 
-                        temp_mac_find_list = [macs[0], macs[1], macs[2], ne_list[main_index].ip, ne_list[main_index].hostname]
+                        temp_mac_find_list = [macs[0], macs[1], macs[2], all_network_elements_list[main_index].ip, all_network_elements_list[main_index].hostname]
                         mac_search_results.append(temp_mac_find_list)
                         print(temp_mac_find_list)
-                elif b.verification_functions[1] and not mac_search:
+                elif b.verification_functions[1] and not mac_address_to_search_for:
                     print("You haven't specified any MAC-Addresses")
 
                 # Verify if there are too many mac addresses on the access ports
@@ -227,8 +213,8 @@ class Engine:
                     # Get the command that we send to the switch using a number of methods in the VerifyCommands Class
                     # Also send command to get the show mac output
                     if not b.verification_functions[1]:
-                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(ne_list[main_index].model),
-                                                                             ne_list[main_index].trunks_dollar))
+                        get_macs = net_connect.send_command(b.sh_mac_command(b.show_mac_hyphen(all_network_elements_list[main_index].model),
+                                                                             all_network_elements_list[main_index].trunks_dollar))
                         #  clean it by removing unwanted lines and return the data is nestled lists:
                         mac_list = b.clean_mac_table(get_macs)
                     mac_threshold = 3
@@ -246,7 +232,7 @@ class Engine:
                         if if_count.count(int) > mac_threshold:
                             print(f"Too many macs ({if_count.count(int)}) found on {int}")
                             skip_if.append(int)
-                            unknown_ne_list.append(UnknownNetworkElement(str(main_index) + str(ints), ne_list[main_index].swindex, ne_list[main_index].hostname, ne_list[main_index].ip, int))
+                            found_unknown_network_entity_list.append(UnknownNetworkElement(str(main_index) + str(ints), all_network_elements_list[main_index].swindex, all_network_elements_list[main_index].hostname, all_network_elements_list[main_index].ip, int))
 
                 net_connect.disconnect()
 print('Enter SSH Credentials: Username')
@@ -268,22 +254,22 @@ if not_work:
     print("")
     print("*" * 10)
     print("\n")
-for unknown_ne_list_index, item in enumerate(unknown_ne_list):
+for unknown_ne_list_index, item in enumerate(found_unknown_network_entity_list):
     print("Access-ports with too many mac-addresses:")
-    print("Index of element:", unknown_ne_list[unknown_ne_list_index].index)
-    print("Index of local switch:", unknown_ne_list[unknown_ne_list_index].local_swindex)
-    print("Hostname of local switch:", unknown_ne_list[unknown_ne_list_index].local_swhostname)
-    print("IP of local switch:", unknown_ne_list[unknown_ne_list_index].local_swip)
-    print("Local interface:", unknown_ne_list[unknown_ne_list_index].local_swif)
+    print("Index of element:", found_unknown_network_entity_list[unknown_ne_list_index].index)
+    print("Index of local switch:", found_unknown_network_entity_list[unknown_ne_list_index].local_swindex)
+    print("Hostname of local switch:", found_unknown_network_entity_list[unknown_ne_list_index].local_swhostname)
+    print("IP of local switch:", found_unknown_network_entity_list[unknown_ne_list_index].local_swip)
+    print("Local interface:", found_unknown_network_entity_list[unknown_ne_list_index].local_swif)
     print("*" * 10)
     print("\n")
-for i, value in enumerate(ne_list):
+for i, value in enumerate(all_network_elements_list):
     if value != '': # because ne_list loop is index based I have to add '' when an iteration doesn't find anything to add to ne_list, but I need to keep the index synced with the len() of the list
         print("Switches found:")
-        print("Index of element:", ne_list[i].swindex)
-        print("Hostname of switch:", ne_list[i].hostname)
-        print("IP of switch:", ne_list[i].ip)
-        print("Model:", ne_list[i].model)
+        print("Index of element:", all_network_elements_list[i].swindex)
+        print("Hostname of switch:", all_network_elements_list[i].hostname)
+        print("IP of switch:", all_network_elements_list[i].ip)
+        print("Model:", all_network_elements_list[i].model)
         print("*" * 10)
         print("\n")
 
